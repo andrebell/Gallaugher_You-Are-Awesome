@@ -6,10 +6,12 @@
 //
 
 import UIKit
+import AVFoundation
 
 class ViewController: UIViewController {
     @IBOutlet weak var messageLabel: UILabel!
     @IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var playSoundSwitch: UISwitch!
     
     let messages: [String] = ["You Are Awesone!",
                               "You Are Great!",
@@ -17,32 +19,58 @@ class ViewController: UIViewController {
                               "When The Genius Bar Needs Help, They Call You!",
                               "Fabulos, That's You!",
                               "You've Got The Design Skills Of Jony Ive!"]
-    let totalNumberImages = 9
+    let totalNumberImages = 10
+    let totalNumberSounds = 6
     
     var messageNumber: Int = 0
     var imageNumber: Int = 0
+    var soundNumber: Int = 0
+    
+    var audioPlayer: AVAudioPlayer!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         messageLabel.text = ""
     }
 
-    @IBAction func showMessagePressed(_ sender: UIButton) {
-        var newMessageNumber: Int
-        
-        repeat {
-            newMessageNumber = Int.random(in: 0...messages.count-1)
-        } while newMessageNumber == messageNumber
-        messageNumber = newMessageNumber
-        messageLabel.text = messages[messageNumber]
-        
-        var newImageNumber: Int
-        repeat {
-            newImageNumber = Int.random(in: 0...totalNumberImages)
-        } while newImageNumber == imageNumber
-        imageNumber = newImageNumber
-        imageView.image = UIImage(named: "image\(imageNumber)")
+    func playSound(name: String) {
+        if let sound = NSDataAsset(name: name) {
+            do {
+                try audioPlayer = AVAudioPlayer(data: sound.data)
+                audioPlayer.play()
+            } catch {
+                print("🤬 ERROR: \(error.localizedDescription) Could not initialize AudioPlayer!")
+            }
+        } else {
+            print("🤬 ERROR: Could not load sound data!")
+        }
     }
     
+    func newUniqueNumber(currentNumber: Int, upperBound: Int) -> Int {
+        var newNumber: Int
+        repeat {
+            newNumber = Int.random(in: 0...upperBound)
+        } while newNumber == currentNumber
+        return newNumber
+    }
+    
+    @IBAction func showMessagePressed(_ sender: UIButton) {
+        messageNumber = newUniqueNumber(currentNumber: messageNumber, upperBound: messages.count-1)
+        messageLabel.text = messages[messageNumber]
+        
+        imageNumber = newUniqueNumber(currentNumber: imageNumber, upperBound: totalNumberImages-1)
+        imageView.image = UIImage(named: "image\(imageNumber)")
+        
+        soundNumber = newUniqueNumber(currentNumber: soundNumber, upperBound: totalNumberSounds-1)
+        if playSoundSwitch.isOn {
+            playSound(name: "sound\(soundNumber)")
+        }
+    }
+    
+    @IBAction func playSoundToggled(_ sender: UISwitch) {
+        if !sender.isOn && audioPlayer != nil {
+            audioPlayer.stop()
+        }
+    }
 }
 
